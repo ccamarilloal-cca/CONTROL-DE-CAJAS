@@ -7,7 +7,7 @@ const CONFIG = {
   // 1. Abre tu Google Sheet
   // 2. Copia el ID de la URL:
   //    https://docs.google.com/spreadsheets/d/ [ESTE_ES_EL_ID] /edit
-  SHEET_ID: 'https://docs.google.com/spreadsheets/d/1JpB5kflG65ewB50op35ZbVAXx0hc2cTxEXupLO6F6Vg/edit?gid=1639693194#gid=1639693194',
+  SHEET_ID: '1JpB5kflG65ewB50op35ZbVAXx0hc2cTxEXupLO6F6Vg',
 
   // Nombre de la empresa (aparece en el header)
   EMPRESA: 'ABC Ximple Logistics',
