@@ -435,16 +435,35 @@ async function loadData() {
 }
 
 async function fetchSheet(sheetName) {
-  const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}&headers=${CONFIG.HEADER_ROW}`;
-  const res  = await fetch(url);
-  if (!res.ok) throw new Error(`No se pudo cargar la hoja "${sheetName}". Verifica que el Sheet sea público.`);
-  const txt  = await res.text();
-  const json = JSON.parse(txt.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
-  if (json.status === 'error') throw new Error(json.errors?.[0]?.message || 'Error en Google Sheets');
-  const cols = json.table.cols.map(c => c.label);
-  return json.table.rows.map(r => {
+  const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+  let res;
+  try { res = await fetch(url); }
+  catch(e) { throw new Error(`Sin conexión al cargar "${sheetName}": ${e.message}`); }
+
+  if (res.status === 400) throw new Error(`Sheet ID incorrecto o hoja "${sheetName}" no existe. Revisa config.js`);
+  if (res.status === 401 || res.status === 403) throw new Error(`El Sheet no es público. Ve a Compartir → Cualquier persona con el enlace.`);
+  if (!res.ok) throw new Error(`Error HTTP ${res.status} al cargar "${sheetName}"`);
+
+  const txt = await res.text();
+  const match = txt.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
+  if (!match) throw new Error(`Respuesta inesperada de Google. ¿El Sheet ID es correcto?`);
+
+  const json = JSON.parse(match[1]);
+  if (json.status === 'error') {
+    const msg = json.errors?.[0]?.detailed_message || json.errors?.[0]?.message || 'Error desconocido';
+    throw new Error(`Error en hoja "${sheetName}": ${msg}`);
+  }
+  if (!json.table?.rows?.length) throw new Error(`La hoja "${sheetName}" no tiene datos.`);
+
+  // Fila 0 = título, Fila 1 = encabezados
+  const headerIdx = CONFIG.HEADER_ROW - 1;
+  const headerRow = json.table.rows[headerIdx];
+  if (!headerRow) throw new Error(`No hay encabezados en fila ${CONFIG.HEADER_ROW} de "${sheetName}"`);
+  const cols = headerRow.c.map(c => c?.v != null ? String(c.v).trim() : '');
+
+  return json.table.rows.slice(headerIdx + 1).map(r => {
     const obj = {};
-    cols.forEach((h,i) => { obj[h] = r.c[i]?.v ?? ''; });
+    cols.forEach((h, i) => { obj[h] = r?.c?.[i]?.v ?? ''; });
     return obj;
   });
 }
