@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Control Cajas">
+<link rel="manifest" href="manifest.json">
+<title>Control de Cajas | ABC Ximple</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --blue:#1565C0;--blue2:#1976D2;--blue3:#0D47A1;
+  --green:#2E7D32;--red:#C62828;--orange:#E65100;--amber:#F59E0B;
+  --purple:#7C3AED;--indigo:#4338CA;
+  --g50:#F8FAFC;--g100:#F1F5F9;--g200:#E2E8F0;
+  --g300:#CBD5E1;--g500:#64748B;--g700:#334155;--g900:#0F172A;
+  --shadow:0 2px 8px rgba(0,0,0,.09);--r:12px;--r2:8px;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--g50);color:var(--g900);min-height:100vh;}
+
+/* HEADER */
+.hdr{background:var(--blue);color:#fff;padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.hdr-logo{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.hdr-logo em{background:rgba(255,255,255,.2);border-radius:5px;padding:2px 7px;font-style:normal;font-size:11px;}
+.hdr-right{display:flex;align-items:center;gap:10px;font-size:12px;}
+.badge-red{background:#FF1744;border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700;display:none;animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.6;}}
+.btn-refresh{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:4px;}
+.btn-refresh:hover{background:rgba(255,255,255,.25);}
+#clock{opacity:.8;font-size:12px;}
+
+/* MAIN */
+.main{padding:16px 20px;max-width:1400px;margin:0 auto;}
+.section-lbl{font-size:11px;font-weight:700;color:var(--g500);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;margin-top:4px;}
+
+/* LOADING */
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;gap:14px;}
+.spin{width:38px;height:38px;border:4px solid var(--g200);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading p{color:var(--g500);font-size:13px;}
+
+/* ERROR */
+.error-box{background:#FFF5F5;border:1px solid #FCA5A5;border-radius:var(--r);padding:24px;text-align:center;margin:40px auto;max-width:500px;}
+.error-box h3{color:var(--red);margin-bottom:8px;}
+.error-box p{font-size:13px;color:var(--g700);margin-bottom:16px;}
+.btn-retry{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 20px;cursor:pointer;font-size:13px;font-weight:600;}
+
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+@media(min-width:600px){.kpi-row{grid-template-columns:repeat(8,1fr);}}
+.kpi{background:#fff;border-radius:var(--r);padding:14px 10px;text-align:center;box-shadow:var(--shadow);cursor:pointer;transition:transform .15s,box-shadow .15s;border:2px solid transparent;user-select:none;}
+.kpi:hover{transform:translateY(-2px);box-shadow:0 5px 18px rgba(0,0,0,.12);}
+.kpi:active{transform:scale(.97);}
+.kpi .n{font-size:28px;font-weight:800;line-height:1;}
+.kpi .l{font-size:10px;color:var(--g500);margin-top:4px;font-weight:600;text-transform:uppercase;}
+.kpi .s{font-size:9px;color:var(--g500);margin-top:1px;}
+.c-blue{color:var(--blue);}
+.c-green{color:var(--green);}
+.c-red{color:var(--red);}
+.c-orange{color:var(--orange);}
+.c-purple{color:var(--purple);}
+.c-indigo{color:var(--indigo);}
+.c-amber{color:var(--amber);}
+
+/* TEAMS */
+.teams{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:16px;}
+@media(min-width:700px){.teams{grid-template-columns:repeat(3,1fr);}}
+.team-card{background:#fff;border-radius:var(--r);padding:16px;box-shadow:var(--shadow);}
+.tc-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.tc-name{font-size:14px;font-weight:700;}
+.tc-sub{font-size:10px;color:var(--g500);margin-top:2px;}
+.tc-badge{background:var(--g100);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;color:var(--g700);}
+.tc-util{font-size:20px;font-weight:800;color:var(--blue);}
+.tc-util small{font-size:11px;color:var(--g500);font-weight:400;}
+.tc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px;}
+.tc-stat{background:var(--g50);border-radius:var(--r2);padding:8px 6px;text-align:center;cursor:pointer;transition:background .1s;}
+.tc-stat:hover{background:var(--g100);}
+.tc-stat:active{background:var(--g200);}
+.tc-stat .sn{font-size:18px;font-weight:700;}
+.tc-stat .sl{font-size:9px;color:var(--g500);font-weight:600;text-transform:uppercase;margin-top:2px;}
+
+/* BOTTOM GRID */
+.grid2{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:16px;}
+@media(min-width:700px){.grid2{grid-template-columns:1fr 1fr;}}
+.card{background:#fff;border-radius:var(--r);padding:16px;box-shadow:var(--shadow);}
+.card-t{font-size:13px;font-weight:700;color:var(--g700);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+
+/* PATIO LIST */
+.patio-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:var(--r2);cursor:pointer;margin-bottom:3px;transition:background .1s;}
+.patio-item:hover{background:var(--g50);}
+.patio-item:active{background:var(--g100);}
+.pi-name{font-size:12px;font-weight:600;color:var(--g700);min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pi-bar{flex:1.5;height:5px;background:var(--g200);border-radius:3px;overflow:hidden;}
+.pi-fill{height:5px;background:var(--blue);border-radius:3px;}
+.pi-num{font-size:12px;font-weight:700;color:var(--blue);min-width:22px;text-align:right;}
+
+/* DIAS */
+.dias-g{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px;}
+.dia-it{background:var(--g50);border-radius:var(--r2);padding:10px 4px;text-align:center;}
+.dia-n{font-size:20px;font-weight:800;}
+.dia-l{font-size:9px;color:var(--g500);font-weight:600;text-transform:uppercase;margin-top:2px;}
+.mov-g{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.mov-it{background:var(--g50);border-radius:var(--r2);padding:12px;text-align:center;cursor:pointer;transition:background .1s;}
+.mov-it:hover{background:var(--g100);}
+.mov-n{font-size:22px;font-weight:800;}
+.mov-l{font-size:10px;color:var(--g500);font-weight:600;text-transform:uppercase;margin-top:2px;}
+
+/* COORD */
+.coord-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--g100);}
+.coord-row:last-child{border-bottom:none;}
+.coord-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;}
+.coord-name{font-size:12px;font-weight:600;flex:1;}
+.coord-stats{display:flex;gap:8px;}
+.cs{text-align:center;}
+.cs .n{font-size:14px;font-weight:700;}
+.cs .l{font-size:9px;color:var(--g500);font-weight:600;text-transform:uppercase;}
+
+/* NO LOCALIZADAS */
+.noloc-it{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:var(--r2);background:#FFF5F5;border-left:3px solid var(--red);margin-bottom:5px;}
+.nl-caja{font-size:12px;font-weight:700;color:var(--red);}
+.nl-info{font-size:10px;color:var(--g500);}
+.nl-badge{font-size:9px;background:var(--red);color:#fff;border-radius:8px;padding:2px 7px;font-weight:600;}
+
+/* ACCIONES */
+.ac-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--g100);}
+.ac-item:last-child{border-bottom:none;}
+.ac-num{width:22px;height:22px;background:var(--blue);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+.ac-txt{font-size:12px;color:var(--g700);}
+.ac-txt strong{color:var(--blue3);}
+
+/* CHIPS */
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{background:var(--g100);border-radius:16px;padding:3px 10px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;}
+.chip-n{background:var(--red);color:#fff;border-radius:8px;padding:1px 6px;font-size:9px;}
+
+/* BARRA CARG/VACIA */
+.cv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.cv-card{background:var(--g50);border-radius:var(--r2);padding:12px;}
+.cv-name{font-size:12px;font-weight:700;margin-bottom:8px;}
+.cv-bar-row{margin-bottom:5px;}
+.cv-bar-label{display:flex;justify-content:space-between;font-size:10px;color:var(--g500);margin-bottom:2px;}
+.cv-bar-track{height:7px;background:var(--g200);border-radius:4px;overflow:hidden;}
+.cv-bar-fill{height:7px;border-radius:4px;}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:var(--r);width:100%;max-width:860px;margin:auto;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+.m-head{background:var(--blue);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;}
+.m-title{font-size:15px;font-weight:700;}
+.m-close{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:0 2px;opacity:.8;line-height:1;}
+.m-close:hover{opacity:1;}
+.m-kpis{display:flex;gap:12px;flex-wrap:wrap;padding:12px 20px;background:var(--g50);border-bottom:1px solid var(--g200);}
+.m-kpi .n{font-size:22px;font-weight:800;color:var(--blue);}
+.m-kpi .l{font-size:9px;color:var(--g500);font-weight:600;text-transform:uppercase;}
+.m-body{padding:14px 20px;max-height:65vh;overflow-y:auto;}
+.m-search{width:100%;border:1px solid var(--g200);border-radius:var(--r2);padding:8px 12px;font-size:13px;margin-bottom:12px;outline:none;}
+.m-search:focus{border-color:var(--blue);}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.tbl th{background:var(--g100);padding:7px 8px;text-align:left;font-weight:700;font-size:10px;color:var(--g500);text-transform:uppercase;letter-spacing:.4px;position:sticky;top:0;white-space:nowrap;}
+.tbl td{padding:7px 8px;border-bottom:1px solid var(--g100);vertical-align:middle;}
+.tbl tr:hover td{background:var(--g50);}
+.cj{font-weight:700;color:var(--blue3);font-size:12px;}
+.est{display:inline-block;padding:2px 7px;border-radius:8px;font-size:9px;font-weight:700;text-transform:uppercase;white-space:nowrap;}
+.est-CARGADA{background:#DCFCE7;color:#166534;}
+.est-VACÍA{background:#DBEAFE;color:#1E40AF;}
+.est-ENVIAJE,.est-EN-VIAJE{background:#EDE9FE;color:#5B21B6;}
+.est-ENTALLER,.est-EN-TALLER{background:#FEF3C7;color:#92400E;}
+.est-ENPATIO,.est-EN-PATIO{background:#E0F2FE;color:#0C4A6E;}
+.est-DAÑADA{background:#FEE2E2;color:#991B1B;}
+
+@media(max-width:600px){
+  .main{padding:12px;}
+  .kpi .n{font-size:22px;}
+  .tbl td,.tbl th{padding:5px 6px;}
+  .cv-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-logo">
+    📦 Control Cajas
+    <em id="empresa-label">ABC Ximple</em>
+  </div>
+  <div class="hdr-right">
+    <div class="badge-red" id="badge-crit">⚠ CRÍTICOS: <span id="n-crit">0</span></div>
+    <button class="btn-install" id="btn-install" onclick="installApp()" style="display:none;background:rgba(255,255,255,.25);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;">⬇ Instalar</button><button class="btn-refresh" onclick="loadData()">↻ Actualizar</button>
+    <div id="clock">--:--</div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="main" id="app">
+
+  <!-- LOADING -->
+  <div class="loading" id="loading">
+    <div class="spin"></div>
+    <p>Cargando inventario de cajas...</p>
+  </div>
+
+  <!-- ERROR -->
+  <div id="error-box" style="display:none;" class="error-box">
+    <h3>⚠ No se pudieron cargar los datos</h3>
+    <p id="error-msg">Verifica que el SHEET_ID en config.js sea correcto y que el Sheet sea público.</p>
+    <button class="btn-retry" onclick="loadData()">Reintentar</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dash" style="display:none;">
+
+    <!-- KPIs GLOBALES -->
+    <div class="section-lbl">📊 Resumen Global</div>
+    <div class="kpi-row">
+      <div class="kpi" onclick="openModal('TODAS','TODAS')">
+        <div class="n c-blue" id="g-total">—</div><div class="l">Total</div>
+      </div>
+      <div class="kpi" onclick="openModal('TODAS','CARGADA')">
+        <div class="n c-green" id="g-carg">—</div><div class="l">Cargadas</div>
+      </div>
+      <div class="kpi" onclick="openModal('TODAS','VACÍA')">
+        <div class="n c-indigo" id="g-vac">—</div><div class="l">Vacías</div>
+      </div>
+      <div class="kpi" onclick="openModal('TODAS','EN VIAJE')">
+        <div class="n c-purple" id="g-viaje">—</div><div class="l">En Viaje</div>
+      </div>
+      <div class="kpi" onclick="openModal('DANADAS','TODAS')">
+        <div class="n c-red" id="g-dan">—</div><div class="l">Dañadas</div>
+      </div>
+      <div class="kpi" onclick="openModal('TALLER','TODAS')">
+        <div class="n c-orange" id="g-tall">—</div><div class="l">En Taller</div>
+      </div>
+      <div class="kpi" onclick="openModal('NOLOC','TODAS')">
+        <div class="n c-red" id="g-noloc">—</div><div class="l">No Localiz.</div>
+      </div>
+      <div class="kpi" onclick="openModal('CRITICO','TODAS')">
+        <div class="n c-red" id="g-crit">—</div><div class="l">🔴 Crítico</div><div class="s">&gt;7d sin mov</div>
+      </div>
+    </div>
+
+    <!-- EQUIPOS -->
+    <div class="section-lbl">🏢 Por Equipo</div>
+    <div class="teams">
+      <!-- NAL -->
+      <div class="team-card">
+        <div class="tc-head">
+          <div><div class="tc-name">📦 NACIONAL</div><div class="tc-sub">Cristian Zuñiga · Julio Hernández</div></div>
+          <div class="tc-badge" id="nal-badge">— cajas</div>
+        </div>
+        <div class="tc-util" id="nal-util">—% <small>utilización</small></div>
+        <div class="tc-stats">
+          <div class="tc-stat" onclick="openModal('NACIONAL','CARGADA')"><div class="sn c-green" id="nal-carg">—</div><div class="sl">Cargadas</div></div>
+          <div class="tc-stat" onclick="openModal('NACIONAL','VACÍA')"><div class="sn c-indigo" id="nal-vac">—</div><div class="sl">Vacías</div></div>
+          <div class="tc-stat" onclick="openModal('NACIONAL','EN VIAJE')"><div class="sn c-purple" id="nal-viaje">—</div><div class="sl">En Viaje</div></div>
+          <div class="tc-stat" onclick="openModal('NACIONAL','CRITICO')"><div class="sn c-red" id="nal-crit">—</div><div class="sl">Crítico</div></div>
+          <div class="tc-stat" onclick="openModal('NACIONAL','EN TALLER')"><div class="sn c-orange" id="nal-tall">—</div><div class="sl">Taller</div></div>
+          <div class="tc-stat" onclick="openModal('NACIONAL','NOLOC')"><div class="sn c-red" id="nal-noloc">—</div><div class="sl">No Loc.</div></div>
+        </div>
+      </div>
+      <!-- IMPO/EXPO -->
+      <div class="team-card">
+        <div class="tc-head">
+          <div><div class="tc-name">🌐 IMPO / EXPO</div><div class="tc-sub">Equipo Internacional</div></div>
+          <div class="tc-badge" id="ie-badge">— cajas</div>
+        </div>
+        <div class="tc-util" id="ie-util">—% <small>utilización</small></div>
+        <div class="tc-stats">
+          <div class="tc-stat" onclick="openModal('IMPO-EXPO','CARGADA')"><div class="sn c-green" id="ie-carg">—</div><div class="sl">Cargadas</div></div>
+          <div class="tc-stat" onclick="openModal('IMPO-EXPO','VACÍA')"><div class="sn c-indigo" id="ie-vac">—</div><div class="sl">Vacías</div></div>
+          <div class="tc-stat" onclick="openModal('IMPO-EXPO','EN VIAJE')"><div class="sn c-purple" id="ie-viaje">—</div><div class="sl">En Viaje</div></div>
+          <div class="tc-stat" onclick="openModal('IMPO-EXPO','CRITICO')"><div class="sn c-red" id="ie-crit">—</div><div class="sl">Crítico</div></div>
+          <div class="tc-stat" onclick="openModal('IMPO-EXPO','EN TALLER')"><div class="sn c-orange" id="ie-tall">—</div><div class="sl">Taller</div></div>
+          <div class="tc-stat" onclick="openModal('IMPO-EXPO','NOLOC')"><div class="sn c-red" id="ie-noloc">—</div><div class="sl">No Loc.</div></div>
+        </div>
+      </div>
+      <!-- PENSKE -->
+      <div class="team-card">
+        <div class="tc-head">
+          <div><div class="tc-name">🟠 PENSKE</div><div class="tc-sub">Moran · Esparza · Obregón · Arratia</div></div>
+          <div class="tc-badge" id="psk-badge">— cajas</div>
+        </div>
+        <div class="tc-util" id="psk-util">—% <small>utilización</small></div>
+        <div class="tc-stats">
+          <div class="tc-stat" onclick="openModal('PENSKE','CARGADA')"><div class="sn c-green" id="psk-carg">—</div><div class="sl">Cargadas</div></div>
+          <div class="tc-stat" onclick="openModal('PENSKE','VACÍA')"><div class="sn c-indigo" id="psk-vac">—</div><div class="sl">Vacías</div></div>
+          <div class="tc-stat" onclick="openModal('PENSKE','EN VIAJE')"><div class="sn c-purple" id="psk-viaje">—</div><div class="sl">En Viaje</div></div>
+          <div class="tc-stat" onclick="openModal('PENSKE','CRITICO')"><div class="sn c-red" id="psk-crit">—</div><div class="sl">Crítico</div></div>
+          <div class="tc-stat" onclick="openModal('PENSKE','EN TALLER')"><div class="sn c-orange" id="psk-tall">—</div><div class="sl">Taller</div></div>
+          <div class="tc-stat" onclick="openModal('PENSKE','NOLOC')"><div class="sn c-red" id="psk-noloc">—</div><div class="sl">No Loc.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRID 2 COLS -->
+    <div class="grid2">
+
+      <!-- PATIOS -->
+      <div class="card">
+        <div class="card-t">📍 Cajas por Patio / Ubicación</div>
+        <div id="patios-list">—</div>
+      </div>
+
+      <!-- DIAS + MOVIMIENTO -->
+      <div class="card">
+        <div class="card-t">⏱ Días sin Movimiento</div>
+        <div class="dias-g">
+          <div class="dia-it"><div class="dia-n c-green" id="d-hoy">—</div><div class="dia-l">Hoy</div></div>
+          <div class="dia-it"><div class="dia-n" style="color:#0891B2" id="d-sem">—</div><div class="dia-l">2-7d</div></div>
+          <div class="dia-it"><div class="dia-n c-amber" id="d-mes">—</div><div class="dia-l">8-30d</div></div>
+          <div class="dia-it"><div class="dia-n c-orange" id="d-3m">—</div><div class="dia-l">1-3m</div></div>
+          <div class="dia-it"><div class="dia-n c-red" id="d-mas">—</div><div class="dia-l">&gt;90d</div></div>
+        </div>
+        <div class="card-t" style="margin-top:14px;">📦 Movimiento del Período</div>
+        <div class="mov-g">
+          <div class="mov-it" onclick="openModal('MOVHOY','TODAS')">
+            <div class="mov-n c-green" id="mov-hoy">—</div><div class="mov-l">Mov. Hoy</div>
+          </div>
+          <div class="mov-it" onclick="openModal('MOVSEM','TODAS')">
+            <div class="mov-n" style="color:#0891B2" id="mov-sem">—</div><div class="mov-l">Esta Semana</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COORDINADORES PENSKE -->
+      <div class="card">
+        <div class="card-t">👤 Coordinadores PENSKE</div>
+        <div id="coord-list">—</div>
+      </div>
+
+      <!-- NO LOCALIZADAS + PLAN -->
+      <div class="card">
+        <div class="card-t">❌ No Localizadas</div>
+        <div id="noloc-list" style="margin-bottom:12px;">—</div>
+        <div class="card-t">📋 Plan de Acción</div>
+        <div class="ac-item"><div class="ac-num">1</div><div class="ac-txt"><strong>Verificar físicamente</strong> en cada patio registrado.</div></div>
+        <div class="ac-item"><div class="ac-num">2</div><div class="ac-txt"><strong>Contactar último cliente</strong> — confirmar retención o devolución.</div></div>
+        <div class="ac-item"><div class="ac-num">3</div><div class="ac-txt"><strong>Activar GPS / ping</strong> si la unidad tiene dispositivo.</div></div>
+        <div class="ac-item"><div class="ac-num">4</div><div class="ac-txt"><strong>Actualizar estatus</strong> a LOCALIZADA o SINIESTRO en Sheet.</div></div>
+      </div>
+
+      <!-- TIPOS DE DAÑO -->
+      <div class="card">
+        <div class="card-t">🔧 Tipos de Daño — Catálogo</div>
+        <div class="chips" id="damage-chips" style="margin-bottom:14px;">—</div>
+        <div class="card-t">🛣 Próximos Pasos</div>
+        <div class="ac-item"><div class="ac-num">1</div><div class="ac-txt">Estandarizar comentarios con catálogo de <strong>tipos de falla</strong> en Sheet.</div></div>
+        <div class="ac-item"><div class="ac-num">2</div><div class="ac-txt">Agregar columna <strong>FOTO_URL</strong> con enlace a fotos en Drive.</div></div>
+        <div class="ac-item"><div class="ac-num">3</div><div class="ac-txt">Crear <strong>alerta automática</strong> por email cuando días &gt; umbral crítico.</div></div>
+        <div class="ac-item"><div class="ac-num">4</div><div class="ac-txt">Integrar <strong>checklist pre-operacional</strong> con captura de foto desde celular.</div></div>
+      </div>
+
+      <!-- CARGADAS vs VACÍAS -->
+      <div class="card">
+        <div class="card-t">📊 Cargadas vs Vacías por Equipo</div>
+        <div class="cv-grid" id="cv-grid">—</div>
+      </div>
+
+    </div>
+    <div style="text-align:center;font-size:11px;color:var(--g500);padding:12px 0;">
+      Última actualización: <span id="last-update">—</span> &nbsp;·&nbsp; ABC Ximple Logistics
+    </div>
+  </div><!-- /dash -->
+
+</main>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="closeOverlay(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="m-head">
+      <div class="m-title" id="m-title">Detalle</div>
+      <button class="m-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="m-kpis" id="m-kpis"></div>
+    <div class="m-body">
+      <input class="m-search" type="text" placeholder="🔍 Buscar caja, cliente, coordinador..." oninput="filterTable(this.value)" id="m-search">
+      <table class="tbl">
+        <thead id="m-thead"></thead>
+        <tbody id="m-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SCRIPTS -->
+<script src="config.js"></script>
+<script>
+// ── STATE ──────────────────────────────────────────────────────
+let ALL_CAJAS = [];
+let MODAL_ROWS = [];
+
+// ── CLOCK ──────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── LOAD DATA ──────────────────────────────────────────────────
+async function loadData() {
+  show('loading'); hide('dash'); hide('error-box');
+
+  try {
+    const sheets = CONFIG.HOJAS;
+    const [nal, ie, psk] = await Promise.all([
+      fetchSheet(sheets.nacional),
+      fetchSheet(sheets.impoexpo),
+      fetchSheet(sheets.penske),
+    ]);
+
+    const parse = (rows, equipo) => rows.map(r => parseRow(r, equipo));
+    ALL_CAJAS = [
+      ...parse(nal, 'NACIONAL'),
+      ...parse(ie,  'IMPO-EXPO'),
+      ...parse(psk, 'PENSKE'),
+    ].filter(c => c.caja);
+
+    renderDash();
+    hide('loading'); show('dash');
+    document.getElementById('last-update').textContent =
+      new Date().toLocaleString('es-MX', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+  } catch(e) {
+    hide('loading');
+    document.getElementById('error-msg').textContent = e.message;
+    show('error-box');
+  }
+}
+
+async function fetchSheet(sheetName) {
+  const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+  let res;
+  try { res = await fetch(url); }
+  catch(e) { throw new Error(`Sin conexión al cargar "${sheetName}": ${e.message}`); }
+
+  if (res.status === 400) throw new Error(`Sheet ID incorrecto o hoja "${sheetName}" no existe. Revisa config.js`);
+  if (res.status === 401 || res.status === 403) throw new Error(`El Sheet no es público. Ve a Compartir → Cualquier persona con el enlace.`);
+  if (!res.ok) throw new Error(`Error HTTP ${res.status} al cargar "${sheetName}"`);
+
+  const txt = await res.text();
+  const match = txt.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
+  if (!match) throw new Error(`Respuesta inesperada de Google. ¿El Sheet ID es correcto?`);
+
+  const json = JSON.parse(match[1]);
+  if (json.status === 'error') {
+    const msg = json.errors?.[0]?.detailed_message || json.errors?.[0]?.message || 'Error desconocido';
+    throw new Error(`Error en hoja "${sheetName}": ${msg}`);
+  }
+  if (!json.table?.rows?.length) throw new Error(`La hoja "${sheetName}" no tiene datos.`);
+
+  // Fila 0 = título, Fila 1 = encabezados
+  const headerIdx = CONFIG.HEADER_ROW - 1;
+  const headerRow = json.table.rows[headerIdx];
+  if (!headerRow) throw new Error(`No hay encabezados en fila ${CONFIG.HEADER_ROW} de "${sheetName}"`);
+  const cols = headerRow.c.map(c => c?.v != null ? String(c.v).trim() : '');
+
+  return json.table.rows.slice(headerIdx + 1).map(r => {
+    const obj = {};
+    cols.forEach((h, i) => { obj[h] = r?.c?.[i]?.v ?? ''; });
+    return obj;
+  });
+}
+
+function parseRow(r, equipo) {
+  // Column names match the Excel exactly
+  return {
+    caja:        str(r['N° CAJA']),
+    equipo,
+    estatus:     str(r['ESTATUS OPERATIVO']),
+    alerta:      str(r['NIVEL ALERTA']),
+    dias:        num(r['DÍAS SIN MOV']),
+    localizada:  str(r['LOCALIZADA']),
+    ubicacion:   str(r['UBICACIÓN REAL']),
+    patio:       str(r['PATIO INVENTARIO']),
+    cliente:     str(r['ÚLTIMO CLIENTE INV'] || r['CLIENTE INV']),
+    coordinador: str(r['COORDINADOR PKE']),
+    dano:        str(r['DAÑO / CONDICIÓN']),
+    tipoDano:    str(r['TIPO DAÑO IE']),
+    descDano:    str(r['DESC DAÑO IE']),
+    comentarios: str(r['COMENTARIOS INV']),
+    tractocamion:str(r['TRACTOCAMION']),
+    operador:    str(r['OPERADOR']),
+  };
+}
+
+// ── RENDER ─────────────────────────────────────────────────────
+function renderDash() {
+  const all = ALL_CAJAS;
+  const t   = totales(all);
+
+  // Badge crítico
+  if (t.critico > 0) {
+    document.getElementById('badge-crit').style.display = 'inline-block';
+    document.getElementById('n-crit').textContent = t.critico;
+  }
+
+  // Global KPIs
+  s('g-total', t.total);  s('g-carg', t.cargadas); s('g-vac', t.vacias);
+  s('g-viaje', t.viaje);  s('g-dan',  t.danadas);  s('g-tall', t.taller);
+  s('g-noloc', t.noloc);  s('g-crit', t.critico);
+
+  // Equipos
+  ['NACIONAL','IMPO-EXPO','PENSKE'].forEach(eq => {
+    const pre = {NACIONAL:'nal','IMPO-EXPO':'ie',PENSKE:'psk'}[eq];
+    const sub  = all.filter(c => c.equipo === eq);
+    const st   = totales(sub);
+    s(pre+'-badge', st.total+' cajas');
+    s(pre+'-util',  st.util+'%');
+    document.getElementById(pre+'-util').innerHTML = st.util+'% <small>utilización</small>';
+    s(pre+'-carg',  st.cargadas); s(pre+'-vac',  st.vacias);
+    s(pre+'-viaje', st.viaje);    s(pre+'-crit', st.critico);
+    s(pre+'-tall',  st.taller);   s(pre+'-noloc',st.noloc);
+  });
+
+  renderPatios(all);
+  renderDias(all);
+  renderCoords(all.filter(c=>c.equipo==='PENSKE'));
+  renderNoLoc(all.filter(c=>c.localizada.includes('NO LOCALIZADA')));
+  renderDamage(all);
+  renderCV(all);
+}
+
+function totales(cajas) {
+  const cargadas = cajas.filter(c=>c.estatus==='CARGADA').length;
+  const viaje    = cajas.filter(c=>c.estatus==='EN VIAJE').length;
+  const total    = cajas.length;
+  return {
+    total, cargadas, viaje,
+    vacias:   cajas.filter(c=>c.estatus==='VACÍA').length,
+    taller:   cajas.filter(c=>c.estatus==='EN TALLER').length,
+    patio:    cajas.filter(c=>c.estatus==='EN PATIO').length,
+    danadas:  cajas.filter(c=>c.dano && c.dano.includes('DAÑADA')).length,
+    noloc:    cajas.filter(c=>c.localizada.includes('NO LOCALIZADA')).length,
+    critico:  cajas.filter(c=>c.alerta.includes('CRITICO')).length,
+    alerta:   cajas.filter(c=>c.alerta.includes('ALERTA')).length,
+    movHoy:   cajas.filter(c=>c.dias<=1).length,
+    movSem:   cajas.filter(c=>c.dias<=7).length,
+    util:     total ? Math.round((cargadas+viaje)/total*100) : 0,
+  };
+}
+
+function renderPatios(all) {
+  const dist = {};
+  all.forEach(c => {
+    const p = c.patio || c.ubicacion || 'Sin patio';
+    if (p && p !== '') dist[p] = (dist[p]||0)+1;
+  });
+  const sorted = Object.entries(dist).sort((a,b)=>b[1]-a[1]).slice(0,14);
+  const max    = sorted[0]?.[1] || 1;
+  document.getElementById('patios-list').innerHTML = sorted.map(([p,n]) =>
+    `<div class="patio-item" onclick="openPatioModal('${escAttr(p)}')">
+      <span class="pi-name">${p}</span>
+      <div class="pi-bar"><div class="pi-fill" style="width:${Math.round(n/max*100)}%"></div></div>
+      <span class="pi-num">${n}</span>
+    </div>`
+  ).join('');
+}
+
+function renderDias(all) {
+  const d = all.map(c=>c.dias);
+  s('d-hoy', d.filter(x=>x<=1).length);
+  s('d-sem', d.filter(x=>x>1&&x<=7).length);
+  s('d-mes', d.filter(x=>x>7&&x<=30).length);
+  s('d-3m',  d.filter(x=>x>30&&x<=90).length);
+  s('d-mas', d.filter(x=>x>90).length);
+  s('mov-hoy', totales(all).movHoy);
+  s('mov-sem', totales(all).movSem);
+}
+
+function renderCoords(penske) {
+  const by = {};
+  penske.forEach(c => {
+    const co = c.coordinador || 'Sin asignar';
+    if (!by[co]) by[co]={total:0,carg:0,vac:0,viaje:0};
+    by[co].total++;
+    if(c.estatus==='CARGADA') by[co].carg++;
+    if(c.estatus==='VACÍA')   by[co].vac++;
+    if(c.estatus==='EN VIAJE')by[co].viaje++;
+  });
+  const colors=['#1565C0','#2E7D32','#7C3AED','#C62828'];
+  let i=0;
+  document.getElementById('coord-list').innerHTML = Object.entries(by)
+    .sort((a,b)=>b[1].total-a[1].total)
+    .map(([n,st])=>`
+    <div class="coord-row">
+      <div class="coord-av" style="background:${colors[i++%4]}">${initials(n)}</div>
+      <div class="coord-name">${n}</div>
+      <div class="coord-stats">
+        <div class="cs"><div class="n c-green">${st.carg}</div><div class="l">Carg</div></div>
+        <div class="cs"><div class="n c-indigo">${st.vac}</div><div class="l">Vac</div></div>
+        <div class="cs"><div class="n c-purple">${st.viaje}</div><div class="l">Viaje</div></div>
+        <div class="cs"><div class="n c-blue">${st.total}</div><div class="l">Total</div></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderNoLoc(noloc) {
+  if (!noloc.length) {
+    document.getElementById('noloc-list').innerHTML = '<div style="color:var(--green);font-size:12px;padding:8px 0;">✅ Sin cajas no localizadas</div>';
+    return;
+  }
+  document.getElementById('noloc-list').innerHTML = noloc.map(c=>`
+    <div class="noloc-it">
+      <div><div class="nl-caja">${c.caja}</div><div class="nl-info">${c.equipo} · ${c.dias}d sin mov</div></div>
+      <span class="nl-badge">SIN INFO</span>
+    </div>`).join('');
+}
+
+function renderDamage(all) {
+  const cats={'Piso':0,'Puerta':0,'Techo/Filtración':0,'Llantas':0,'Estructura':0,'En Taller':0,'Sin detalle':0};
+  all.forEach(c=>{
+    if(!c.dano&&c.estatus!=='EN TALLER') return;
+    const com=(c.comentarios||c.descDano||'').toLowerCase();
+    if(c.estatus==='EN TALLER') cats['En Taller']++;
+    else if(com.includes('piso')) cats['Piso']++;
+    else if(com.includes('puerta')) cats['Puerta']++;
+    else if(com.includes('techo')||com.includes('filtra')) cats['Techo/Filtración']++;
+    else if(com.includes('llanta')) cats['Llantas']++;
+    else if(com.includes('base')||com.includes('defensa')||com.includes('zoclo')||com.includes('quebrad')) cats['Estructura']++;
+    else cats['Sin detalle']++;
+  });
+  document.getElementById('damage-chips').innerHTML = Object.entries(cats)
+    .filter(([,v])=>v>0)
+    .map(([k,v])=>`<div class="chip">${k}<span class="chip-n">${v}</span></div>`).join('');
+}
+
+function renderCV(all) {
+  const teams=[
+    {name:'📦 Nacional', eq:'NACIONAL', c:'#1565C0'},
+    {name:'🌐 Impo/Expo', eq:'IMPO-EXPO', c:'#7C3AED'},
+    {name:'🟠 Penske', eq:'PENSKE', c:'#E65100'},
+  ];
+  document.getElementById('cv-grid').innerHTML = teams.map(({name,eq,c})=>{
+    const sub=all.filter(x=>x.equipo===eq);
+    const t=totales(sub);
+    const pc=t.total?Math.round(t.cargadas/t.total*100):0;
+    const pv=t.total?Math.round(t.vacias/t.total*100):0;
+    return `<div class="cv-card">
+      <div class="cv-name" style="color:${c}">${name}</div>
+      <div class="cv-bar-row">
+        <div class="cv-bar-label"><span>Cargadas</span><span>${t.cargadas} (${pc}%)</span></div>
+        <div class="cv-bar-track"><div class="cv-bar-fill" style="width:${pc}%;background:var(--green)"></div></div>
+      </div>
+      <div class="cv-bar-row">
+        <div class="cv-bar-label"><span>Vacías</span><span>${t.vacias} (${pv}%)</span></div>
+        <div class="cv-bar-track"><div class="cv-bar-fill" style="width:${pv}%;background:var(--indigo)"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── MODAL ──────────────────────────────────────────────────────
+function openModal(equipo, filtro) {
+  let cajas = ALL_CAJAS;
+  let title  = '';
+
+  if (equipo==='TODAS') {
+    title = filtro==='TODAS' ? 'Todas las Cajas' : filtro;
+    if (filtro!=='TODAS') cajas = cajas.filter(c=>c.estatus===filtro);
+  } else if (equipo==='DANADAS') {
+    cajas = cajas.filter(c=>c.dano&&c.dano.includes('DAÑADA'));
+    title = '🔴 Cajas Dañadas';
+  } else if (equipo==='TALLER') {
+    cajas = cajas.filter(c=>c.estatus==='EN TALLER');
+    title = '🔧 En Taller';
+  } else if (equipo==='NOLOC') {
+    cajas = cajas.filter(c=>c.localizada.includes('NO LOCALIZADA'));
+    title = '❌ No Localizadas';
+  } else if (equipo==='CRITICO') {
+    cajas = cajas.filter(c=>c.alerta.includes('CRITICO'));
+    title = '🔴 Nivel Crítico';
+  } else if (equipo==='MOVHOY') {
+    cajas = cajas.filter(c=>c.dias<=1);
+    title = '📦 Movimiento Hoy';
+  } else if (equipo==='MOVSEM') {
+    cajas = cajas.filter(c=>c.dias<=7);
+    title = '📅 Movimiento Esta Semana';
+  } else {
+    // equipo específico
+    cajas = cajas.filter(c=>c.equipo===equipo);
+    title = equipo;
+    if (filtro==='CRITICO') { cajas=cajas.filter(c=>c.alerta.includes('CRITICO')); title+=' — Crítico'; }
+    else if (filtro==='NOLOC') { cajas=cajas.filter(c=>c.localizada.includes('NO LOCALIZADA')); title+=' — No Loc.'; }
+    else if (filtro!=='TODAS') { cajas=cajas.filter(c=>c.estatus===filtro); title+=` — ${filtro}`; }
+  }
+
+  showModal(title, cajas);
+}
+
+function openPatioModal(patio) {
+  const cajas = ALL_CAJAS.filter(c=>
+    (c.patio||'').toLowerCase().includes(patio.toLowerCase()) ||
+    (c.ubicacion||'').toLowerCase().includes(patio.toLowerCase())
+  );
+  showModal(`📍 ${patio}`, cajas);
+}
+
+function showModal(title, cajas) {
+  MODAL_ROWS = cajas;
+  document.getElementById('m-title').textContent = `${title} — ${cajas.length} cajas`;
+  document.getElementById('m-search').value = '';
+
+  const byEst = {};
+  cajas.forEach(c=>{ byEst[c.estatus]=(byEst[c.estatus]||0)+1; });
+  document.getElementById('m-kpis').innerHTML =
+    Object.entries(byEst).map(([e,n])=>
+      `<div class="m-kpi"><div class="n">${n}</div><div class="l">${e||'—'}</div></div>`
+    ).join('') || `<div class="m-kpi"><div class="n">${cajas.length}</div><div class="l">Total</div></div>`;
+
+  document.getElementById('m-thead').innerHTML = `<tr>
+    <th>N° Caja</th><th>Equipo</th><th>Estatus</th><th>Alerta</th>
+    <th>Días</th><th>Patio / Ubicación</th><th>Cliente</th>
+    <th>Coord.</th><th>Condición</th><th>Comentarios</th>
+  </tr>`;
+
+  renderModalRows(cajas);
+  document.getElementById('overlay').classList.add('open');
+}
+
+function renderModalRows(cajas) {
+  document.getElementById('m-tbody').innerHTML = cajas.map(c => {
+    const ec  = 'est-'+(c.estatus||'').replace(/\s/g,'-');
+    const alt = c.alerta.includes('CRITICO')?'🔴':c.alerta.includes('ALERTA')?'🟡':c.alerta.includes('NORMAL')?'🟢':'⚪';
+    return `<tr>
+      <td><span class="cj">${c.caja}</span></td>
+      <td style="font-size:10px">${c.equipo}</td>
+      <td><span class="est ${ec}">${c.estatus||'—'}</span></td>
+      <td>${alt}</td>
+      <td>${c.dias||'—'}</td>
+      <td style="font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.patio||c.ubicacion||'—'}</td>
+      <td style="font-size:10px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.cliente||'—'}</td>
+      <td style="font-size:10px">${c.coordinador||'—'}</td>
+      <td style="color:${c.dano?'var(--red)':'inherit'};font-size:10px">${c.dano||'✅'}</td>
+      <td style="font-size:10px;color:var(--g500);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.comentarios||'—'}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--g500)">Sin resultados</td></tr>';
+}
+
+function filterTable(q) {
+  const lq = q.toLowerCase();
+  const filtered = lq
+    ? MODAL_ROWS.filter(c =>
+        c.caja.toLowerCase().includes(lq) ||
+        c.cliente.toLowerCase().includes(lq) ||
+        c.coordinador.toLowerCase().includes(lq) ||
+        c.patio.toLowerCase().includes(lq) ||
+        c.estatus.toLowerCase().includes(lq) ||
+        c.comentarios.toLowerCase().includes(lq)
+      )
+    : MODAL_ROWS;
+  renderModalRows(filtered);
+}
+
+function closeModal()  { document.getElementById('overlay').classList.remove('open'); }
+function closeOverlay(e){ if(e.target===document.getElementById('overlay')) closeModal(); }
+
+// ── UTILS ──────────────────────────────────────────────────────
+const s  = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+const show = id => { const el=document.getElementById(id); if(el) el.style.display=''; };
+const hide = id => { const el=document.getElementById(id); if(el) el.style.display='none'; };
+const str  = v => (v===null||v===undefined)?'':String(v).trim();
+const num  = v => isNaN(Number(v))?0:Number(v);
+const escAttr = s => s.replace(/'/g,"\\'");
+const initials = n => n.split(' ').slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
+
+// ── INIT ───────────────────────────────────────────────────────
+loadData();
+
+// ── SERVICE WORKER + PWA INSTALL ──────────────────────────────
+let _deferredPrompt = null;
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+// Android: captura el evento de instalación
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _deferredPrompt = e;
+  // Muestra el botón "Instalar App"
+  const btn = document.getElementById('btn-install');
+  if (btn) btn.style.display = 'inline-flex';
+});
+
+// Cuando ya está instalada, oculta el botón
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('btn-install');
+  if (btn) btn.style.display = 'none';
+  _deferredPrompt = null;
+});
+
+async function installApp() {
+  if (_deferredPrompt) {
+    // Android: muestra el diálogo nativo de instalación
+    _deferredPrompt.prompt();
+    const { outcome } = await _deferredPrompt.userChoice;
+    _deferredPrompt = null;
+    document.getElementById('btn-install').style.display = 'none';
+  } else {
+    // iPhone: instrucciones manuales
+    showIOSInstall();
+  }
+}
+
+function showIOSInstall() {
+  const div = document.createElement('div');
+  div.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;display:flex;align-items:flex-end;justify-content:center;';
+  div.innerHTML = `
+    <div style="background:#fff;border-radius:16px 16px 0 0;padding:24px 20px;width:100%;max-width:500px;text-align:center;">
+      <div style="font-size:24px;margin-bottom:8px;">📱</div>
+      <div style="font-weight:700;font-size:16px;margin-bottom:6px;">Instalar en iPhone</div>
+      <div style="font-size:13px;color:#64748B;line-height:1.6;margin-bottom:16px;">
+        1. Toca el botón <strong>compartir</strong> (□↑) en Safari<br>
+        2. Selecciona <strong>"Agregar a pantalla de inicio"</strong><br>
+        3. Toca <strong>Agregar</strong>
+      </div>
+      <div style="font-size:11px;color:#94A3B8;margin-bottom:16px;">⚠ Debes usar Safari, no Chrome</div>
+      <button onclick="this.closest('div[style]').remove()" style="background:#1565C0;color:#fff;border:none;border-radius:10px;padding:10px 28px;font-size:14px;font-weight:600;cursor:pointer;width:100%;">Entendido</button>
+    </div>`;
+  document.body.appendChild(div);
+}
+</script>
+</body>
+</html>
